@@ -9,6 +9,7 @@ import java.io.IOException;
 
 import org.lwjgl.opengl.GL20;
 public class Shader{
+	String shaderSourceFile;
 	int shaderProgram;
 	int vertShader;
 	int fragShader;
@@ -28,7 +29,8 @@ public class Shader{
 		glCompileShader(fragShader);
 		if(glGetShader(fragShader, GL_COMPILE_STATUS) == GL_FALSE){
 			System.err.println("Fragment shader failed to compile.");
-			
+			System.err.println(GL20.glGetShaderInfoLog(fragShader, 1000));
+			Thread.dumpStack();
 			System.exit(0);
 		}
 		

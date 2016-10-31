@@ -17,7 +17,7 @@ import static org.lwjgl.opengl.GL15.*;
 public class Test {
 
     public static void main(String[] args) {
-		System.setProperty("org.lwjgl.librarypath", new File("native/windows").getAbsolutePath());
+		System.setProperty("org.lwjgl.librarypath", new File("lib/lwjgl-2.9.3/native/linux").getAbsolutePath());
 
         try {
             Display.setDisplayMode(new DisplayMode(640, 480));

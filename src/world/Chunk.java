@@ -6,6 +6,8 @@ import static org.lwjgl.opengl.GL15.*;
 import java.nio.FloatBuffer;
 import java.util.LinkedList;
 
+import framework.rendering.VBO;
+import framework.rendering.VBOSource;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
@@ -63,7 +65,7 @@ public class Chunk {
 			for(int j = 0; j < 16; j++){
 				for(int k = 0; k < 16; k++){
 					if(renderLocs[i][j][k] != -1){
-						Renderer.mem.removeBlock(renderLocs[i][j][k]);
+						Renderer.mem.removeBlock(renderLocs[i][j][k], VBOSource.fromWorldClear);
 						renderLocs[i][j][k] = -1;
 					}
 				}
@@ -105,7 +107,7 @@ public class Chunk {
 			for(; cj < 16; cj++){
 				for(; ck < 16; ck++){
 					if(renderLocs[ci][cj][ck] != -1){
-						if(Renderer.mem.removeBlock(renderLocs[ci][cj][ck]) == false)
+						if(Renderer.mem.removeBlock(renderLocs[ci][cj][ck], VBOSource.fromWorldClear) == false)
 							return false;
 						renderLocs[ci][cj][ck] = -1;
 					}
@@ -117,17 +119,20 @@ public class Chunk {
 		ci = 0;
 		return true;
 	}
-	//renders as much of the chunk it can in the given amount of time
 	private int i,j,k;
 	public boolean render(){
 		int[] pos = new int[4];
+		//'i' 'j' and 'k' are not set to zero at the beginning of each loop
+		// because if the loop ends prematurely, (when no more blocks can be
+		// rendered), the loop should start where it left off when the method
+		// is called again
 		for(; i < 16; i++){
 			for(; j < 16; j++){
 				for(; k < 16; k++){
 					pos[0] = i; pos[1] = j; pos[2] = k;
 					pos[identity] = Chunk.local;
 					toAbsoluteMut(pos);
-					if(updateBlockGraphicsNoGarbage(pos) == false)
+					if(updateBlockGraphicsNoGarbage(pos, VBOSource.fromWorldGen) == false)
 						return false;
 				}
 				k = 0;
@@ -197,8 +202,9 @@ public class Chunk {
 	static{
 		
 	}
+	//'source' is the identity of the
 	public static int debugCounter = 0;
-	public boolean updateBlockGraphicsNoGarbage(int[] blockPos){//bug found: slowed down by garbage collection
+	public boolean updateBlockGraphicsNoGarbage(int[] blockPos, VBOSource source){
 		toLocalMut(blockPos);
 		
 		//t2.start();
@@ -209,7 +215,7 @@ public class Chunk {
 //		if(Keyboard.isKeyDown(Keyboard.KEY_H) && renderLocs[i][j][k] != -1)
 //			System.out.println("Chunk " + renderLocs[i][j][k]);
 		if(renderLocs[i][j][k] != -1){
-			Renderer.mem.removeBlock(renderLocs[i][j][k]);
+			Renderer.mem.removeBlock(renderLocs[i][j][k], source);
 			renderLocs[i][j][k] = -1;
 		}
 		
@@ -221,13 +227,17 @@ public class Chunk {
 		//fill 'surround' with the 6 blocks around the block that will be rendered
 		//the value of 'n' corresponds to  Blocks.TOP,Blocks.BOTTOM, etc.
 		for(byte n = 0; n < 6; n++){
-			temp[0] = Blocks.adjX(n, blockPos[Ops.x]); temp[1] = Blocks.adjY(n, blockPos[Ops.y]); temp[2] = Blocks.adjZ(n, blockPos[Ops.z]);
+			temp[0] = Blocks.adjX(n, blockPos[Ops.x]);
+			temp[1] = Blocks.adjY(n, blockPos[Ops.y]);
+			temp[2] = Blocks.adjZ(n, blockPos[Ops.z]);
 			temp[Chunk.identity] = Chunk.absolute;
 			Block block = planet.getBlock(temp);//planet.getBlock(Blocks.adjX(n, blockPos[Ops.x]), Blocks.adjY(n, blockPos[Ops.y]), Blocks.adjZ(n, blockPos[Ops.z]));
 			surround[n] = block;
 		}
 		
-		renderLocs[i][j][k] = Renderer.mem.renderBlock(surround, Blocks.list[blocks[i][j][k]], blockPos[Ops.x] , blockPos[Ops.y], blockPos[Ops.z]);
+		renderLocs[i][j][k] = Renderer.mem.renderBlock(surround, Blocks.list[blocks[i][j][k]],
+				blockPos[Ops.x] , blockPos[Ops.y], blockPos[Ops.z],
+				source);
 		//if the buffer pool runs out
 		if(renderLocs[i][j][k] == -2){
 			renderLocs[i][j][k] = -1;
@@ -245,18 +255,19 @@ public class Chunk {
 		int[] rel = toLocal(pos);
 		return blocks[rel[0]][rel[1]][rel[2]];
 	}
-	public void setBlock(int[] pos, byte id){
+	public void setBlock(int[] pos, byte id, VBOSource source){
 		toLocalMut(pos);
 		blocks[pos[0]][pos[1]][pos[2]] = id;
 		toAbsoluteMut(pos);
-		updateBlockGraphicsNoGarbage(pos); 
+		//update the block
+		updateBlockGraphicsNoGarbage(pos, source);
+		//update the 6 surrounding blocks
 		for(byte n = 0; n < 6; n++){
 			int[] adj = new int[]{Blocks.adjX(n, pos[0]),Blocks.adjY(n, pos[1]),Blocks.adjZ(n, pos[2]),pos[identity]};
 			
 			Chunk c = planet.getChunk(adj);
-			
 			if(c != null)
-				c.updateBlockGraphicsNoGarbage(adj);
+				c.updateBlockGraphicsNoGarbage(adj, source);
 		}
 	}
 	

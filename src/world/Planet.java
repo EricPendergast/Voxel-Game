@@ -7,6 +7,7 @@ import framework.OpsMut;
 import framework.Runner;
 import framework.Timer;
 import world.blocks.Block;
+import framework.rendering.VBOSource;
 public class Planet {
 	public static final int x = 0;
 	public static final int y = 1;
@@ -26,7 +27,7 @@ public class Planet {
 		this.radius = radius;
 		this.chunkRadius = chunkRadius;
 		noise = new PerlinNoiseAdvanced(radius, 20,40, 1242398);
-		chunkManager = new ChunkManager(4, this);
+		chunkManager = new ChunkManager(3, this);
 
 //		chunks = new Chunk[chunkRadius*2][chunkRadius*2][chunkRadius*2];
 //		for(int x = 0; x < chunkRadius*2; x++){
@@ -273,12 +274,12 @@ public class Planet {
 	 * @param z
 	 * @param id
 	 */
-	public void setBlock(int x, int y, int z, byte id){
+	public void setBlock(int x, int y, int z, byte id, VBOSource source){
 		Chunk c = getChunk(new int[]{x,y,z,Chunk.absolute});//(int)Math.floor(x/16.0),(int)Math.floor(y/16.0),(int)Math.floor(z/16.0));
 		if(c == null)
 			return;
 		
-		c.setBlock(new int[]{x,y,z, Chunk.absolute}, id);
+		c.setBlock(new int[]{x,y,z, Chunk.absolute}, id, source);
 	}
 }
 

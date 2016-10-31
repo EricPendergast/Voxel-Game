@@ -13,7 +13,7 @@ void main(){
 	
 	
 	gl_FragColor = makeCrosshair(vec2(gl_FragCoord), gl_FragColor);
-	
+
 	// = vec4(0,0,0,1);
 	
 }
@@ -29,15 +29,15 @@ void main(){
 }
 */
 vec4 toARGB(vec4 color){
-	color.r = -1.0/(abs(max(0,color.r))+1)+1;
-	color.g = -1.0/(abs(max(0,color.g))+1)+1;
-	color.b = -1.0/(abs(max(0,color.b))+1)+1;
-	color.a = 1;
+	color.r = -1.0/(abs(max(0.0,color.r))+1.0)+1.0;
+	color.g = -1.0/(abs(max(0.0,color.g))+1.0)+1.0;
+	color.b = -1.0/(abs(max(0.0,color.b))+1.0)+1.0;
+	color.a = 1.0;
 	
 	return color;
 }
 vec4 blend(vec4 a, vec4 b){
-	vec4 ret = vec4(0,0,0,0);
+	vec4 ret = vec4(0.0, 0.0, 0.0, 0.0);
 	
 	ret.r = (a.r + b.r); 
 	ret.g = (a.g + b.g);
@@ -51,8 +51,8 @@ uniform float crosshairWidth;
 vec4 makeCrosshair(vec2 pos, vec4 color){
 	pos.x = abs(pos.x-crosshairPos.x);
 	pos.y = abs(pos.y-crosshairPos.y);
-	if( (pos.x-crosshairWidth < 0 && pos.y-crosshairWidth*7 < 0) || (pos.y-crosshairWidth < 0 && pos.x-crosshairWidth*7 < 0))
-		return vec4(1-color.r,1-color.g,1-color.b,1);
+	if( (pos.x-crosshairWidth < 0.0 && pos.y-crosshairWidth*7.0 < 0.0) || (pos.y-crosshairWidth < 0.0 && pos.x-crosshairWidth*7.0 < 0.0))
+		return vec4(1.0-color.r,1.0-color.g,1.0-color.b,1.0);
 		//return vec4(mod((color.r+.3),1),mod((color.g+.3),1),mod((color.b+.3),1),1);
 	else
 		return color;

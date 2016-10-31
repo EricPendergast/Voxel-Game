@@ -12,7 +12,7 @@ import framework.Ops;
 import framework.OpsMut;
 import framework.Runner;
 import framework.Timer;
-
+import framework.rendering.VBOSource;
 public class Player implements Entity{
 	public PhysicsBody body;
 	public static final int x = 0;
@@ -170,7 +170,7 @@ public class Player implements Entity{
 	public void render(Planet planet){
 		float[][] look = getDirLook();
 		spinInDirection(look[0],look[1],look[2]);
-		sky.render(planet, body.pos);
+//		sky.render(planet, body.pos);
 		
 		//float[] newPos = {body.pos[x],body.pos[y],body.pos[z]};
 		//OpsMut.subtract(newPos, Ops.multiply(Ops.normalize(body.gravity),.3f));
@@ -324,12 +324,12 @@ public class Player implements Entity{
 		//if(!leftInit & (leftInit = Mouse.isButtonDown(0)) && blockLook != null){
 		if(leftTimer > timeLim && blockLook != null &&  Mouse.isButtonDown(0)){
 			leftTimer = 0;
-			p.setBlock((int)blockLook[x], (int)blockLook[y], (int)blockLook[z], (byte)0);
+			p.setBlock((int)blockLook[x], (int)blockLook[y], (int)blockLook[z], (byte)0, VBOSource.fromPlayer);
 		}
 		//if(!rightInit & (rightInit = Mouse.isButtonDown(1)) && blockPlace != null){
 		if(rightTimer > timeLim && blockPlace != null && Mouse.isButtonDown(1)){
 			rightTimer = 0;
-			p.setBlock((int)blockPlace[x], (int)blockPlace[y], (int)blockPlace[z], Blocks.STONE);
+			p.setBlock((int)blockPlace[x], (int)blockPlace[y], (int)blockPlace[z], Blocks.STONE, VBOSource.fromPlayer);
 		}
 		if(!Mouse.isButtonDown(1))
 			rightTimer = 1000000;

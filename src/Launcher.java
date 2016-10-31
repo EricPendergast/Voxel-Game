@@ -1,4 +1,4 @@
-import java.awt.Color;
+  import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -19,7 +19,8 @@ import framework.queues.ConcurrentQueue;
 
 public class Launcher{
 	public static void main(String[] args) throws LWJGLException{
-		System.setProperty("org.lwjgl.librarypath", new File("native/windows").getAbsolutePath());
+		//Adding the lwjgl natives
+		System.setProperty("org.lwjgl.librarypath", new File("native/linux").getAbsolutePath());
 
 		//for(int i = 0; i < 20; i++){
 		//	System.out.println(Generator.getRandomNumber()%100);

@@ -11,7 +11,7 @@ public class ConcurrentQueue<T extends ConcurrentNode>{
 	}
 	T last;
 	T first;
-	
+	// Pushes the node onto the end of the queue
 	public synchronized void push(T node){
 		size++;
 		node.next = null;
@@ -24,6 +24,7 @@ public class ConcurrentQueue<T extends ConcurrentNode>{
 		if(first == null)
 			first = node;
 	}
+	// Pops the node from the front of the queue
 	public synchronized T pop(){
 		if(size > 0)
 			size--;

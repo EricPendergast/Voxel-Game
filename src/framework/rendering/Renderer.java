@@ -31,6 +31,7 @@ import framework.Runner;
 import framework.Timer;
 import world.SolarSystem;
 
+//This class is the base of the rendering hierarchy. It contains
 public class Renderer {
     public static DisplayMode displayMode;
     Shader defaultShader;
@@ -51,15 +52,13 @@ public class Renderer {
             Display.destroy();
             System.exit(1);
         }
-		class DShader extends Shader{
-			public DShader(StringBuilder vertSource, StringBuilder fragSource) {super(vertSource, fragSource);}
+		defaultShader = new Shader(Shader.loadFile("res/shaders/shader.vert"),Shader.loadFile("res/shaders/shader.frag")){
 			public void enable(){
 				super.enable();
 				setUniform("crosshairWidth", Globals.crosshairWidth);
 				GL20.glUniform2f(getUniformLocation("crosshairPos"), Globals.crosshairPos[0], Globals.crosshairPos[1]);
 			}
-		}
-		defaultShader = new DShader(Shader.loadFile("res/shaders/shader.vert"),Shader.loadFile("res/shaders/shader.frag"));
+		};
 		Globals.crosshairWidth = 5;
 		Globals.crosshairPos = new int[]{displayMode.getWidth()/2, displayMode.getHeight()/2};
 		//defaultShader.setUniform("crosshairWidth", 10);
@@ -74,55 +73,58 @@ public class Renderer {
 	}
 	float i = 0;
 	public void render(){
-		//debug = "";
-		//Timer t = new Timer();
-		//t.start();
-		//3d projection settings
-		////
-		GL11.glMatrixMode(GL11.GL_PROJECTION);
-		GL11.glLoadIdentity();
-		//Runner.debug += " RENDERER1:" + t.getTime();
-		GLU.gluPerspective(45.0f, (float)displayMode.getWidth()/(float)displayMode.getHeight(), 0.1f, 10000f);
-		GL11.glMatrixMode(GL11.GL_MODELVIEW);
-		//GL11.glHint(GL11.GL_PERSPECTIVE_CORRECTION_HINT, GL11.GL_NICEST);
-		GL11.glEnable(GL11.GL_DEPTH_TEST);
-		blocks.bind();
-		//Runner.debug += " 2:" + t.getTime();
-		////
+			//debug = "";
+			//Timer t = new Timer();
+			//t.start();
+		
+		{//3d projection settings
+			GL11.glMatrixMode(GL11.GL_PROJECTION);
+			GL11.glLoadIdentity();
+				//Runner.debug += " RENDERER1:" + t.getTime();
+			GLU.gluPerspective(45.0f, (float)displayMode.getWidth() / (float)displayMode.getHeight(), 0.1f, 10000f);
+			GL11.glMatrixMode(GL11.GL_MODELVIEW);
+			//GL11.glHint(GL11.GL_PERSPECTIVE_CORRECTION_HINT, GL11.GL_NICEST);
+			GL11.glEnable(GL11.GL_DEPTH_TEST);
+			blocks.bind();
+				//Runner.debug += " 2:" + t.getTime();
+		}
+		
 		glClear(GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
 	 	GL11.glLoadIdentity();
-	 	//Runner.debug += " 3:" + t.getTime();
-
+			//Runner.debug += " 3:" + t.getTime();
+		
+		//Translates the opengl camera and draws the block selection cube
 		solarSystem.render();
-		//Runner.debug += " 4:" + t.getTime();
+			//Runner.debug += " 4:" + t.getTime();
 		
 		defaultShader.enable();
-		defaultShader.setUniform("i", i);
-		if(Keyboard.isKeyDown(Keyboard.KEY_1))
-			i -= .05;
-		if(Keyboard.isKeyDown(Keyboard.KEY_2))
-			i += .05;
+		
+		{//Debugging
+			defaultShader.setUniform("i", i);
+			if(Keyboard.isKeyDown(Keyboard.KEY_1))
+				i -= .05;
+			if(Keyboard.isKeyDown(Keyboard.KEY_2))
+				i += .05;
+		}
+		
 		vbo.render();
-		//Runner.debug += " 5:" + t.getTime();
-
-	    ////
-	    //2d rendering settings
-	    //Select The Projection Matrix
-	    GL11.glMatrixMode(GL11.GL_PROJECTION); 
-	    // Reset The Projection Matrix
-	    GL11.glLoadIdentity(); 
-	    //Projection for 2d to adress pixel by x,y
-	    GL11.glOrtho(0, displayMode.getWidth()/(float)displayMode.getHeight()*100,100,0,-1,1);
-	    // Select The Modelview Matrix
-	    GL11.glMatrixMode(GL11.GL_MODELVIEW); 
-	    GL11.glDisable(GL11.GL_DEPTH_TEST);
-	    GL11.glLoadIdentity(); 
-	    ////
-	    //Runner.debug += " 6:" + t.getTime();
-
-	    gui.render();
-	    //Runner.debug += " 7:" + t.getTime() + "}";
-
+			//Runner.debug += " 5:" + t.getTime();
+		
+		{//2d rendering settings
+			//Select The Projection Matrix
+			GL11.glMatrixMode(GL11.GL_PROJECTION);
+			// Reset The Projection Matrix
+			GL11.glLoadIdentity();
+			//Projection for 2d to adress pixel by x,y
+			GL11.glOrtho(0, displayMode.getWidth() / (float)displayMode.getHeight() * 100, 100, 0, -1, 1);
+			// Select The Modelview Matrix
+			GL11.glMatrixMode(GL11.GL_MODELVIEW);
+			GL11.glDisable(GL11.GL_DEPTH_TEST);
+			GL11.glLoadIdentity();
+			//Runner.debug += " 6:" + t.getTime();
+			gui.render();
+			//Runner.debug += " 7:" + t.getTime() + "}";
+		}
 	}
 	private void createWindow() throws LWJGLException{
 		Display.setFullscreen(false);

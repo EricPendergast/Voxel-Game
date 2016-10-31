@@ -21,7 +21,7 @@ public class Sky {
 				GL20.glUniform2f(getUniformLocation("crosshairPos"), Globals.crosshairPos[0], Globals.crosshairPos[1]);
 			}
 		}
-		shader = new SShader(Shader.loadFile("res/shaders/sky2.vert"),Shader.loadFile("res/shaders/sky2.frag"));
+		shader = new SShader(Shader.loadFile("res/shaders/sky.vert"),Shader.loadFile("res/shaders/sky.frag"));
 	}
 	float counter = 0;
 	public void render(Planet planet, float[] playerPos){

@@ -6,15 +6,20 @@ import java.nio.FloatBuffer;
 import java.util.LinkedList;
 
 import org.lwjgl.BufferUtils;
-import org.lwjgl.input.Keyboard;
 
 import world.Chunk;
 import world.blocks.Block;
 
-@SuppressWarnings("static-access")
+// ? Manages the positions of all the vertexes in its given vertex buffer
+// object.
+// IMPORTANT: All interactions that add vertex data to the vbo must go through
+// The MemoryManager.
 public class MemoryManager {
+	// The vertex buffer object whose memory is being managed
 	public VBO vbo;
-	public int cur = 0;
+	// 'cur' is the index at the end of the data written to the VBO. In other
+	// words, everything after 'cur' is empty data ready to be written to.
+	private int cur = 0;
 	int unitSize;
 	private LinkedList<Integer> openSpots;
 	
@@ -31,11 +36,14 @@ public class MemoryManager {
 			colorEmpty.put(0);
 	}
 	
-	private FloatBuffer vertexEmpty = BufferUtils.createFloatBuffer(24 * VBO.vertexSize);
-	private FloatBuffer textureCoordEmpty = BufferUtils.createFloatBuffer(24 * VBO.textureCoordSize);
-	private FloatBuffer colorEmpty = BufferUtils.createFloatBuffer(24 * VBO.colorSize);
+	private FloatBuffer vertexEmpty =
+			BufferUtils.createFloatBuffer(24 * VBO.vertexSize);
+	private FloatBuffer textureCoordEmpty =
+			BufferUtils.createFloatBuffer(24 * VBO.textureCoordSize);
+	private FloatBuffer colorEmpty =
+			BufferUtils.createFloatBuffer(24 * VBO.colorSize);
 
-	public synchronized boolean clear(int start, int length){
+	public synchronized boolean clear(int start, int length, VBOSource source){
 //		FloatBuffer[] b = {	BufferUtils.createFloatBuffer(length*vbo.vertexSize), 
 //							BufferUtils.createFloatBuffer(length*vbo.textureCoordSize), 
 //							BufferUtils.createFloatBuffer(length*vbo.colorSize)};
@@ -59,7 +67,7 @@ public class MemoryManager {
 //		b[0].put(new float[length*vbo.vertexSize]);
 //		b[1].put(new float[length*vbo.textureCoordSize]);
 //		b[2].put(new float[length*vbo.colorSize]);
-		return vbo.put(start, new VertexInfo(b[0], b[1], b[2]));
+		return vbo.put(start, new VertexInfo(b[0], b[1], b[2]), source);
 	}
 //	public void addFace(int start, byte faceNum, Block block, int x, int y, int z){
 //		FloatBuffer[] b = block.getRenderInfo(faceNum, x, y, z);
@@ -67,8 +75,8 @@ public class MemoryManager {
 //			return;
 //		put(start, b[0], b[1], b[2]);
 //	}
-	public synchronized boolean put(int start, VertexInfo info){
-		if(vbo.put(start, info)){
+	public synchronized boolean put(int start, VertexInfo info, VBOSource source){
+		if(vbo.put(start, info, source)){
 			Chunk.debugCounter++;
 			cur += info.pos.capacity()/VBO.vertexSize;
 			return true;
@@ -77,14 +85,14 @@ public class MemoryManager {
 		
 	}
 	/**
-	 * Puts the sides of 'type' into the vbo and returns the index(es) of where the rendering info was put
+	 * Puts the sides of 'type' into the vbo and returns the index(es) of where
+	 * the rendering info was put
 	 * @param sidesOccupied
 	 * @param type
 	 * @return
 	 */
 	
-	public synchronized int renderBlock(Block[] sidesOccupied, Block type, int x, int y, int z){
-		
+	public synchronized int renderBlock(Block[] sidesOccupied, Block type, int x, int y, int z, VBOSource source){
 		if(openSpots.size() == 0){
 			int start = cur;
 			VertexInfo vinfo = type.getRenderInfoNew(sidesOccupied, x, y, z);
@@ -92,8 +100,10 @@ public class MemoryManager {
 				return -1;
 			//if(b[0] == null)
 			//	return -1;
-			//this if statement tells whatever called this method that it tried to render the block, but couldn't because the vbo FloatBuffer pool ran out
-			if(put(start, vinfo) == false)
+			// This if statement tells whatever called this method that it tried
+			// to render the block, but couldn't because the vbo FloatBuffer
+			// pool ran out
+			if(put(start, vinfo, source) == false)
 				return -2;
 			
 			return start;
@@ -105,7 +115,7 @@ public class MemoryManager {
 				return -1;
 			//if(b[0] == null)
 			//	return -1;
-			if(put(start, vinfo) == false)
+			if(put(start, vinfo, source) == false)
 				return -2;
 			
 			openSpots.removeLast();
@@ -114,8 +124,8 @@ public class MemoryManager {
 		
 	}
 	
-	public synchronized boolean removeBlock(int index){
-		if(clear(index, 4*6)){
+	public synchronized boolean removeBlock(int index, VBOSource source){
+		if(clear(index, 4*6, source)){
 			openSpots.addFirst(index);
 			return true;
 		}else

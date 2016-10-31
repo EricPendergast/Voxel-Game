@@ -5,11 +5,13 @@ import framework.Ops;
 import framework.OpsMut;
 import framework.Timer;
 
+//TODO Make collisions work for more general cases
 public class PhysicsBody {
 	public static final int x = 0;
 	public static final int y = 1;
 	public static final int z = 2;
 	public float[] pos;
+	// Partial velocity of the physics body.
 	public float[] dir;
 	public float[] gravity;
 	//a supplemental direction vector
@@ -100,54 +102,73 @@ public class PhysicsBody {
 	}
 	
 	/**
-	 * makes the PhysicsBody collide with the blocks in the given planet
-	 * @param p
+	 * Makes the PhysicsBody collide with the blocks in the given planet. Only
+	 * collides with blocks surrounding the player at his/her current position.
+	 * @param planet
 	 */
-	public boolean updateCollisions(Planet p){
-		
-
+	public boolean updateCollisions(Planet planet){
+		// Whether or not there was a collision
 		boolean collision = false;
 		
+		// Reset all hitbox hit statuses
 		for(int i = 0; i < hitboxCollided.length; i++)
 			hitboxCollided[i] = false;
+		//TODO: Make this work for more general cases, not just for the two hitbox player
 		float[] upperBox = getHitbox(1);
 		float[] lowerBox = getHitbox(0);
+		// The approximate position of the center of the physics body. Right now
+		// it is just the position of the upper box
 		int[] blockPos = new int[]{Math.round(upperBox[x]), Math.round(upperBox[y]), Math.round(upperBox[z])};
 		int[] blockPosLower = new int[]{Math.round(lowerBox[x]),Math.round(lowerBox[y]),Math.round(lowerBox[z])};
 		
 		int[] diff = new int[]{blockPos[x]-blockPosLower[x],blockPos[y]-blockPosLower[y],blockPos[z]-blockPosLower[z]};
 		
 		//The collision checking is done twice. The first time, it collides normally except it does separate 
-		//collisions for the upper and lower box while also avoiding diagonals. It does this because it creates a specific order of collision checks
-		//which creates smoother collisions
-		//The second time checks the 5x5 space around the player in no particular order
+		//collisions for the upper and lower box while also avoiding diagonals.
+		//It does this because it creates a specific order of collision checks
+		//which creates smoother collisions. The second time checks the 5x5
+		//space around the player in no particular order
+		//First collision check
 		for(int i = blockPos[x]-1; i <= blockPos[x]+1; i++)
 			for(int j = blockPos[y]-1; j <= blockPos[y]+1; j++)
 				for(int k = blockPos[z]-1; k <= blockPos[z]+1; k++){
 					int x2 = i-blockPos[x];
-					int y2 = j - blockPos[y];
-					int z2 = k  -  blockPos[z];
+					int y2 = j-blockPos[y];
+					int z2 = k-blockPos[z];
+					// This will evaluate to false if the block at position ijk
+					// is diagonal to the players current block position.
+					// This means diagonal blocks won't cause collisions in this
+					// loop.
 					if((x2 != 0 && y2 == 0 && z2 == 0) || (x2 == 0 && y2 != 0 && z2 == 0) || (x2 == 0 && y2 == 0 && z2 != 0)){
-						for(int l = 0; l < hitboxes.length; l++)
-							collision = collision | p.getBlock(i, j, k).collide(i,j,k, p, this, l);
-						for(int l = 0; l < hitboxes.length; l++)
-							collision = collision | p.getBlock(i-diff[x], j-diff[y], k-diff[z]).collide(i-diff[x], j-diff[y], k-diff[z], p, this, l);	
+						for(int hitboxIndex = 0; hitboxIndex < hitboxes.length; hitboxIndex++){
+							// Note the single |. This prevents short circuiting.
+							// If it wasn't there, the user could only collide
+							// with one block and then 'collision' would be true
+							// so the second part of the | statement would not
+							// be executed. So only one collision would occur.
+							collision = collision | planet.getBlock(i, j, k).collide(i,j,k, planet, this, hitboxIndex);
+						}
+						for(int hitboxIndex = 0; hitboxIndex < hitboxes.length; hitboxIndex++)
+							collision = collision | planet.getBlock(i-diff[x], j-diff[y], k-diff[z]).collide(i-diff[x], j-diff[y], k-diff[z], planet, this, hitboxIndex);
 					}
 				}
 		
-		
+		// Second collision check
+		// Does collisions with the 5x5 space around the
+		// player.
 		for(int i = blockPos[x]-2; i <= blockPos[x]+2; i++)
 			for(int j = blockPos[y]-2; j <= blockPos[y]+2; j++)
 				for(int k = blockPos[z]-2; k <= blockPos[z]+2; k++){
-					for(int l = 0; l < hitboxes.length; l++)
-						collision = collision | p.getBlock(i, j, k).collide(i,j,k, p, this, l);
+					for(int hitboxIndex = 0; hitboxIndex < hitboxes.length; hitboxIndex++)
+						collision = collision | planet.getBlock(i, j, k).collide(i,j,k, planet, this, hitboxIndex);
 				}
 		
 		return collision;
 	}
-	
+	//
 	public void updateCollisionsAdvanced(Planet p){
 		float spacing = .3f;
+		//Resetting the collision statuses for each hitbox
 		for(int i = 0; i < hitboxCollided.length; i++)
 			hitboxCollided[i] = false;
 		
@@ -166,7 +187,9 @@ public class PhysicsBody {
 		OpsMut.add(pos, Ops.multiply(dirNorm,last));
 		updateCollisions(p);
 	}
-	
+	// Simply collides with every block in a 5x5 radius around the physics body.
+	// This way is fast but is not preferable for use with the player because
+	// catching on the edges of blocks sometimes occurs.
 	public boolean updateCollisionsBasic(Planet p){
 		boolean collision = false;
 		
